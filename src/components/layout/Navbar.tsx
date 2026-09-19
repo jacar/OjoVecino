@@ -90,30 +90,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Center: Modern Segmented Portal Control */}
-          <div className="flex items-center bg-slate-950/60 p-1 rounded-xl border border-slate-800 text-xs font-semibold shadow-inner">
+          {/* Center: Modern Segmented Portal Control for the 3 distinct roles */}
+          <div className="flex items-center bg-slate-950/70 p-1 rounded-xl border border-slate-800 text-xs font-semibold shadow-inner">
             <button
               onClick={() => setActivePortal('propietarios')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activePortal === 'propietarios'
-                  ? 'bg-slate-800 text-white font-bold shadow-xs border border-slate-700/80'
+                  ? 'bg-slate-800 text-white font-bold shadow-xs border border-slate-750'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Home className={`w-3.5 h-3.5 ${activePortal === 'propietarios' ? 'text-cyan-400' : ''}`} />
-              <span>Propietarios</span>
+              <span className="hidden sm:inline">Propietarios</span>
+              <span className="sm:hidden">Vecinos</span>
+            </button>
+
+            <button
+              onClick={() => setActivePortal('vigilante')}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                activePortal === 'vigilante'
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-500'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Shield className={`w-3.5 h-3.5 ${activePortal === 'vigilante' ? 'text-white' : 'text-emerald-400'}`} />
+              <span className="hidden sm:inline">Caseta Vigilante</span>
+              <span className="sm:hidden">Caseta</span>
             </button>
 
             <button
               onClick={() => setActivePortal('admin')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activePortal === 'admin'
                   ? 'bg-indigo-600 text-white font-bold shadow-xs border border-indigo-500'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Briefcase className="w-3.5 h-3.5" />
-              <span>Administración</span>
+              <span className="hidden sm:inline">Administración</span>
+              <span className="sm:hidden">Admin</span>
             </button>
           </div>
 

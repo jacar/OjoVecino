@@ -23,7 +23,7 @@ export type PriorityLevel = 'baja' | 'media' | 'alta' | 'critica';
 export type Visibility = 'publico' | 'anonimo' | 'confidencial';
 export type CommunityType = 'condominio' | 'edificio' | 'fraccionamiento' | 'barrio';
 export type Role = 'vecino' | 'admin' | 'operador' | 'seguridad';
-export type ActivePortal = 'propietarios' | 'admin';
+export type ActivePortal = 'admin' | 'propietarios' | 'vigilante';
 
 export interface User {
   id: string;

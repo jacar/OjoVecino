@@ -5,6 +5,7 @@ import { BottomNav } from './components/layout/BottomNav';
 import { CommunityHeader } from './components/layout/CommunityHeader';
 import { Footer } from './components/layout/Footer';
 import { PropietarioDashboard } from './components/propietarios/PropietarioDashboard';
+import { VigilanteDashboard } from './components/vigilante/VigilanteDashboard';
 import { ReportList } from './components/reports/ReportList';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { NewReportModal } from './components/reports/NewReportModal';
@@ -81,8 +82,8 @@ const AppContent: React.FC = () => {
           <InteractiveZoneMap onSelectReport={(id) => setSelectedReportId(id)} />
         )}
 
-        {/* DUAL PORTAL RENDERING */}
-        {activePortal === 'propietarios' ? (
+        {/* THREE DEDICATED PORTALS RENDERING */}
+        {activePortal === 'propietarios' && (
           activeView === 'feed' ? (
             <PropietarioDashboard
               onSelectReport={(id) => setSelectedReportId(id)}
@@ -97,7 +98,17 @@ const AppContent: React.FC = () => {
               onOpenClustering={() => setIsClusteringOpen(true)}
             />
           )
-        ) : (
+        )}
+
+        {activePortal === 'vigilante' && (
+          <VigilanteDashboard
+            onSelectReport={(id) => setSelectedReportId(id)}
+            onOpenRules={() => setIsRulesOpen(true)}
+            onOpenEmergency={() => setIsEmergencyOpen(true)}
+          />
+        )}
+
+        {activePortal === 'admin' && (
           <AdminDashboard
             onSelectReport={(id) => setSelectedReportId(id)}
             onOpenClustering={() => setIsClusteringOpen(true)}

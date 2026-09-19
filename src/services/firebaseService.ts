@@ -5,9 +5,6 @@ import {
   setDoc,
   updateDoc,
   onSnapshot,
-  query,
-  where,
-  limit,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -21,16 +18,33 @@ import {
 import { Report, ChatMessage, RadioTransmission, QuickAuthorization } from '../types';
 
 const COLLECTIONS = {
-  REPORTS: 'reports',
-  COMMUNITIES: 'communities',
-  CHAT_MESSAGES: 'chat_messages',
-  RADIO_TRANSMISSIONS: 'radio_transmissions',
-  AUTHORIZATIONS: 'quick_authorizations',
+  REPORTS: 'ojovecino_reports',
+  COMMUNITIES: 'ojovecino_communities',
+  CHAT_MESSAGES: 'ojovecino_chat_messages',
+  RADIO_TRANSMISSIONS: 'ojovecino_radio_transmissions',
+  AUTHORIZATIONS: 'ojovecino_quick_authorizations',
 };
+
+// Remove undefined fields before writing to Firestore to avoid errors
+function cleanForFirestore<T>(data: T): Record<string, any> {
+  const clean: Record<string, any> = {};
+  if (!data || typeof data !== 'object') return clean;
+  
+  for (const [key, val] of Object.entries(data as Record<string, any>)) {
+    if (val !== undefined) {
+      if (val && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
+        clean[key] = cleanForFirestore(val);
+      } else {
+        clean[key] = val;
+      }
+    }
+  }
+  return clean;
+}
 
 export const firebaseService = {
   /**
-   * Suscribe en tiempo real a los reportes de una comunidad en Firestore.
+   * Suscribe en tiempo real a los reportes en Firestore.
    */
   subscribeToReports(
     communityId: string,
@@ -39,22 +53,24 @@ export const firebaseService = {
   ) {
     try {
       const reportsRef = collection(db, COLLECTIONS.REPORTS);
-      const q = query(reportsRef, where('communityId', '==', communityId));
 
       return onSnapshot(
-        q,
+        reportsRef,
         (snapshot) => {
           if (!snapshot.empty) {
             const reports: Report[] = [];
             snapshot.forEach((docSnap) => {
-              reports.push(docSnap.data() as Report);
+              const data = docSnap.data() as Report;
+              if (!communityId || data.communityId === communityId) {
+                reports.push(data);
+              }
             });
             reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             onSuccess(reports);
           }
         },
         (error) => {
-          console.warn('Firestore subscription fallback to local:', error.message);
+          console.warn('Firestore subscription fallback:', error.message);
           if (onError) onError(error);
         }
       );
@@ -70,7 +86,9 @@ export const firebaseService = {
   async saveReport(report: Report): Promise<void> {
     try {
       const reportRef = doc(db, COLLECTIONS.REPORTS, report.id);
-      await setDoc(reportRef, report, { merge: true });
+      const cleanData = cleanForFirestore(report);
+      await setDoc(reportRef, cleanData, { merge: true });
+      console.log('Report saved to Firestore:', report.id);
     } catch (err) {
       console.warn('Could not save to Firestore (offline/rules):', err);
     }
@@ -82,7 +100,9 @@ export const firebaseService = {
   async updateReport(reportId: string, updates: Partial<Report>): Promise<void> {
     try {
       const reportRef = doc(db, COLLECTIONS.REPORTS, reportId);
-      await updateDoc(reportRef, updates as any);
+      const cleanData = cleanForFirestore(updates);
+      await updateDoc(reportRef, cleanData);
+      console.log('Report updated in Firestore:', reportId);
     } catch (err) {
       console.warn('Could not update in Firestore:', err);
     }
@@ -98,22 +118,24 @@ export const firebaseService = {
   ) {
     try {
       const chatRef = collection(db, COLLECTIONS.CHAT_MESSAGES);
-      const q = query(chatRef, where('communityId', '==', communityId));
 
       return onSnapshot(
-        q,
+        chatRef,
         (snapshot) => {
           if (!snapshot.empty) {
             const msgs: ChatMessage[] = [];
             snapshot.forEach((docSnap) => {
-              msgs.push(docSnap.data() as ChatMessage);
+              const data = docSnap.data() as ChatMessage;
+              if (!communityId || data.communityId === communityId) {
+                msgs.push(data);
+              }
             });
             msgs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
             onSuccess(msgs);
           }
         },
         (error) => {
-          console.warn('Firestore chat listener fallback:', error.message);
+          console.warn('Firestore chat listener error:', error.message);
           if (onError) onError(error);
         }
       );
@@ -126,7 +148,9 @@ export const firebaseService = {
   async saveChatMessage(message: ChatMessage): Promise<void> {
     try {
       const msgRef = doc(db, COLLECTIONS.CHAT_MESSAGES, message.id);
-      await setDoc(msgRef, message, { merge: true });
+      const cleanData = cleanForFirestore(message);
+      await setDoc(msgRef, cleanData, { merge: true });
+      console.log('Chat message synced to Firestore:', message.id);
     } catch (err) {
       console.warn('Could not sync chat message to Firestore:', err);
     }
@@ -142,22 +166,24 @@ export const firebaseService = {
   ) {
     try {
       const radioRef = collection(db, COLLECTIONS.RADIO_TRANSMISSIONS);
-      const q = query(radioRef, where('communityId', '==', communityId), limit(50));
 
       return onSnapshot(
-        q,
+        radioRef,
         (snapshot) => {
           if (!snapshot.empty) {
             const txs: RadioTransmission[] = [];
             snapshot.forEach((docSnap) => {
-              txs.push(docSnap.data() as RadioTransmission);
+              const data = docSnap.data() as RadioTransmission;
+              if (!communityId || data.communityId === communityId) {
+                txs.push(data);
+              }
             });
             txs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             onSuccess(txs);
           }
         },
         (error) => {
-          console.warn('Firestore radio listener fallback:', error.message);
+          console.warn('Firestore radio listener error:', error.message);
           if (onError) onError(error);
         }
       );
@@ -170,7 +196,9 @@ export const firebaseService = {
   async saveRadioTransmission(transmission: RadioTransmission): Promise<void> {
     try {
       const txRef = doc(db, COLLECTIONS.RADIO_TRANSMISSIONS, transmission.id);
-      await setDoc(txRef, transmission, { merge: true });
+      const cleanData = cleanForFirestore(transmission);
+      await setDoc(txRef, cleanData, { merge: true });
+      console.log('Radio transmission synced to Firestore:', transmission.id);
     } catch (err) {
       console.warn('Could not sync radio transmission to Firestore:', err);
     }
@@ -186,22 +214,24 @@ export const firebaseService = {
   ) {
     try {
       const authRef = collection(db, COLLECTIONS.AUTHORIZATIONS);
-      const q = query(authRef, where('communityId', '==', communityId));
 
       return onSnapshot(
-        q,
+        authRef,
         (snapshot) => {
           if (!snapshot.empty) {
             const auths: QuickAuthorization[] = [];
             snapshot.forEach((docSnap) => {
-              auths.push(docSnap.data() as QuickAuthorization);
+              const data = docSnap.data() as QuickAuthorization;
+              if (!communityId || data.communityId === communityId) {
+                auths.push(data);
+              }
             });
             auths.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             onSuccess(auths);
           }
         },
         (error) => {
-          console.warn('Firestore authorizations listener fallback:', error.message);
+          console.warn('Firestore authorizations listener error:', error.message);
           if (onError) onError(error);
         }
       );
@@ -214,7 +244,9 @@ export const firebaseService = {
   async saveQuickAuthorization(auth: QuickAuthorization): Promise<void> {
     try {
       const authRef = doc(db, COLLECTIONS.AUTHORIZATIONS, auth.id);
-      await setDoc(authRef, auth, { merge: true });
+      const cleanData = cleanForFirestore(auth);
+      await setDoc(authRef, cleanData, { merge: true });
+      console.log('Authorization synced to Firestore:', auth.id);
     } catch (err) {
       console.warn('Could not sync authorization to Firestore:', err);
     }
