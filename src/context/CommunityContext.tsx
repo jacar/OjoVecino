@@ -17,6 +17,7 @@ import {
   RadioChannel,
   QuickAuthorization,
   ChatChannelId,
+  IntercomCall,
 } from '../types';
 import { storageService } from '../services/storageService';
 import { firebaseService } from '../services/firebaseService';
@@ -62,6 +63,12 @@ interface CommunityContextType {
   isRadioModalOpen: boolean;
   selectedChatChannel: ChatChannelId;
   unreadChatCount: number;
+
+  // Vantel Real-Time Intercom Calls
+  intercomCalls: IntercomCall[];
+  activeIntercomCall: IntercomCall | null;
+  incomingIntercomCall: IntercomCall | null;
+  isIntercomModalOpen: boolean;
 
   // Actions
   setIsAuthModalOpen: (open: boolean) => void;
@@ -153,6 +160,15 @@ interface CommunityContextType {
 
   updateAuthorizationStatus: (id: string, status: 'pendiente' | 'ingresado' | 'finalizado' | 'rechazado') => void;
 
+  // Vantel Intercom Actions
+  setIsIntercomModalOpen: (open: boolean) => void;
+  initiateIntercomCall: (targetUnit: string, targetName?: string) => Promise<IntercomCall>;
+  answerIntercomCall: (callId: string) => Promise<void>;
+  unlockDoor: (callId?: string) => Promise<void>;
+  endIntercomCall: (callId?: string) => Promise<void>;
+  rejectIntercomCall: (callId: string) => Promise<void>;
+  sendIntercomVoiceSnippet: (callId: string, audioUrl: string) => Promise<void>;
+
   showToast: (title: string, message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   removeToast: (id: string) => void;
   resetAllData: () => void;
@@ -181,6 +197,12 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isRadioModalOpen, setIsRadioModalOpen] = useState<boolean>(false);
   const [selectedChatChannel, setSelectedChatChannel] = useState<ChatChannelId>('garita');
   const [unreadChatCount, setUnreadChatCount] = useState<number>(1);
+
+  // Vantel Real-Time Intercom State
+  const [intercomCalls, setIntercomCalls] = useState<IntercomCall[]>([]);
+  const [activeIntercomCall, setActiveIntercomCall] = useState<IntercomCall | null>(null);
+  const [incomingIntercomCall, setIncomingIntercomCall] = useState<IntercomCall | null>(null);
+  const [isIntercomModalOpen, setIsIntercomModalOpen] = useState<boolean>(false);
 
   // Portal state
   const [activePortal, setActivePortalState] = useState<ActivePortal>('propietarios');
@@ -230,7 +252,7 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
             prev.forEach((m) => map.set(m.id, m));
             firestoreMsgs.forEach((m) => map.set(m.id, m));
             return Array.from(map.values()).sort(
-              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              (a, b) => new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
           });
         }
@@ -269,13 +291,58 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     );
 
+    const unsubCalls = firebaseService.subscribeToIntercomCalls(
+      activeCommunity.id,
+      (firestoreCalls) => {
+        setIntercomCalls(firestoreCalls);
+
+        // Detect if there is an active incoming call for the current user
+        const activeRinging = firestoreCalls.find((call) => {
+          if (call.status !== 'ringing') return false;
+          // If called target is current user unit
+          const isTargetUnit = call.targetUnit.toLowerCase().trim() === currentUser.unit.toLowerCase().trim();
+          // Or if called target is Caseta Garita and current user is in booth / guard role
+          const isTargetGarita = (call.targetUnit.toLowerCase().includes('garita') || call.targetUnit.toLowerCase().includes('caseta')) &&
+            (currentUser.role === 'seguridad' || currentUser.role === 'admin' || activePortal === 'vigilante');
+
+          // Ignore call if it was created by current user
+          const isCaller = call.callerId === currentUser.id;
+
+          return (isTargetUnit || isTargetGarita) && !isCaller;
+        });
+
+        if (activeRinging) {
+          setIncomingIntercomCall(activeRinging);
+          audioRadioService.startIntercomRingtoneLoop();
+        } else {
+          setIncomingIntercomCall(null);
+          audioRadioService.stopIntercomRingtoneLoop();
+        }
+
+        // Sync active ongoing call if user is participant
+        setActiveIntercomCall((prevActive) => {
+          if (!prevActive) return null;
+          const updated = firestoreCalls.find((c) => c.id === prevActive.id);
+          if (!updated || updated.status === 'ended' || updated.status === 'rejected') {
+            audioRadioService.stopIntercomRingtoneLoop();
+            return null;
+          }
+          if (updated.status === 'door_unlocked' && prevActive.status !== 'door_unlocked') {
+            audioRadioService.playDoorBuzzer();
+          }
+          return updated;
+        });
+      }
+    );
+
     return () => {
       if (unsubReports) unsubReports();
       if (unsubChat) unsubChat();
       if (unsubRadio) unsubRadio();
       if (unsubAuths) unsubAuths();
+      if (unsubCalls) unsubCalls();
     };
-  }, [activeCommunity.id]);
+  }, [activeCommunity.id, currentUser.id, currentUser.unit, currentUser.role, activePortal]);
 
   // Persist changes to LocalStorage
   useEffect(() => {
@@ -1073,6 +1140,110 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
     showToast('Estado de Acceso', `Pase de ingreso marcado como "${status.toUpperCase()}"`, 'info');
   };
 
+  // ==========================================
+  // REAL-TIME VANTEL CITOFONO / INTERCOM ACTIONS
+  // ==========================================
+  const initiateIntercomCall = async (targetUnit: string, targetName?: string): Promise<IntercomCall> => {
+    audioRadioService.playDtmfTone('9');
+    setTimeout(() => {
+      audioRadioService.playTelephoneRing();
+    }, 150);
+
+    const newCall: IntercomCall = {
+      id: `call-${Date.now()}`,
+      communityId: activeCommunity.id,
+      callerId: currentUser.id,
+      callerName: currentUser.name,
+      callerRole: currentUser.role,
+      callerUnit: currentUser.unit,
+      targetUnit: targetUnit.trim(),
+      targetName: targetName || targetUnit,
+      status: 'ringing',
+      createdAt: new Date().toISOString(),
+    };
+
+    setActiveIntercomCall(newCall);
+    setIsIntercomModalOpen(true);
+    await firebaseService.saveIntercomCall(newCall);
+
+    showToast('Llamando por Citófono', `Conectando con ${targetUnit}...`, 'info');
+    return newCall;
+  };
+
+  const answerIntercomCall = async (callId: string): Promise<void> => {
+    audioRadioService.stopIntercomRingtoneLoop();
+    audioRadioService.playCallConnectedTone();
+
+    await firebaseService.updateIntercomCallStatus(callId, 'connected', {
+      answeredAt: new Date().toISOString(),
+    });
+
+    const current = intercomCalls.find((c) => c.id === callId);
+    if (current) {
+      setActiveIntercomCall({ ...current, status: 'connected', answeredAt: new Date().toISOString() });
+    }
+    setIncomingIntercomCall(null);
+    setIsIntercomModalOpen(true);
+    showToast('Citófono Conectado', 'Llamada de voz en vivo establecida.', 'success');
+  };
+
+  const unlockDoor = async (callId?: string): Promise<void> => {
+    audioRadioService.playDoorBuzzer();
+
+    const targetCallId = callId || activeIntercomCall?.id;
+    if (targetCallId) {
+      await firebaseService.updateIntercomCallStatus(targetCallId, 'door_unlocked', {
+        doorUnlockedAt: new Date().toISOString(),
+      });
+    }
+
+    sendChatMessage({
+      channelId: 'garita',
+      text: `🔓 [APERTURA REMOTA DE ACCESO]: ${currentUser.name} (${currentUser.unit}) ha abierto la puerta principal/portón desde su citófono.`,
+      quickActionType: 'delivery',
+    });
+
+    showToast('🚪 ¡Acceso Concedido!', 'Puerta peatonal / portón abierto exitosamente.', 'success');
+  };
+
+  const endIntercomCall = async (callId?: string): Promise<void> => {
+    audioRadioService.stopIntercomRingtoneLoop();
+    audioRadioService.playCallEndedTone();
+
+    const targetCallId = callId || activeIntercomCall?.id;
+    if (targetCallId) {
+      await firebaseService.updateIntercomCallStatus(targetCallId, 'ended', {
+        endedAt: new Date().toISOString(),
+      });
+    }
+
+    setActiveIntercomCall(null);
+    setIncomingIntercomCall(null);
+    setIsIntercomModalOpen(false);
+  };
+
+  const rejectIntercomCall = async (callId: string): Promise<void> => {
+    audioRadioService.stopIntercomRingtoneLoop();
+    audioRadioService.playCallEndedTone();
+
+    await firebaseService.updateIntercomCallStatus(callId, 'rejected', {
+      endedAt: new Date().toISOString(),
+    });
+
+    setIncomingIntercomCall(null);
+    if (activeIntercomCall?.id === callId) {
+      setActiveIntercomCall(null);
+    }
+  };
+
+  const sendIntercomVoiceSnippet = async (callId: string, audioUrl: string): Promise<void> => {
+    await firebaseService.updateIntercomCallStatus(callId, 'connected', {
+      lastVoiceSnippet: audioUrl,
+      lastVoiceSender: currentUser.name,
+      lastVoiceTimestamp: new Date().toISOString(),
+    });
+  };
+
   // Reset to default
   const resetAllData = () => {
     storageService.resetToDefault();
@@ -1151,6 +1322,19 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
         broadcastRadioTransmission,
         createQuickAuthorization,
         updateAuthorizationStatus,
+
+        // Vantel Intercom Calls
+        intercomCalls,
+        activeIntercomCall,
+        incomingIntercomCall,
+        isIntercomModalOpen,
+        setIsIntercomModalOpen,
+        initiateIntercomCall,
+        answerIntercomCall,
+        unlockDoor,
+        endIntercomCall,
+        rejectIntercomCall,
+        sendIntercomVoiceSnippet,
 
         showToast,
         removeToast,

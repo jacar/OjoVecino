@@ -15,7 +15,7 @@ import {
   updateProfile,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { Report, ChatMessage, RadioTransmission, QuickAuthorization } from '../types';
+import { Report, ChatMessage, RadioTransmission, QuickAuthorization, IntercomCall } from '../types';
 
 const COLLECTIONS = {
   REPORTS: 'ojovecino_reports',
@@ -23,6 +23,7 @@ const COLLECTIONS = {
   CHAT_MESSAGES: 'ojovecino_chat_messages',
   RADIO_TRANSMISSIONS: 'ojovecino_radio_transmissions',
   AUTHORIZATIONS: 'ojovecino_quick_authorizations',
+  INTERCOM_CALLS: 'ojovecino_intercom_calls',
 };
 
 // Remove undefined fields before writing to Firestore to avoid errors
@@ -249,6 +250,84 @@ export const firebaseService = {
       console.log('Authorization synced to Firestore:', auth.id);
     } catch (err) {
       console.warn('Could not sync authorization to Firestore:', err);
+    }
+  },
+
+  // ==========================================
+  // REAL-TIME VANTEL INTERCOM CALLS FIRESTORE
+  // ==========================================
+  subscribeToIntercomCalls(
+    communityId: string,
+    onSuccess: (calls: IntercomCall[]) => void,
+    onError?: (err: any) => void
+  ) {
+    try {
+      const callsRef = collection(db, COLLECTIONS.INTERCOM_CALLS);
+
+      return onSnapshot(
+        callsRef,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const calls: IntercomCall[] = [];
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data() as IntercomCall;
+              if (!communityId || data.communityId === communityId) {
+                calls.push(data);
+              }
+            });
+            calls.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            onSuccess(calls);
+          } else {
+            onSuccess([]);
+          }
+        },
+        (error) => {
+          console.warn('Firestore intercom calls listener error:', error.message);
+          if (onError) onError(error);
+        }
+      );
+    } catch (err) {
+      console.warn('Firestore intercom calls not initialized:', err);
+      return () => {};
+    }
+  },
+
+  async saveIntercomCall(call: IntercomCall): Promise<void> {
+    try {
+      const callRef = doc(db, COLLECTIONS.INTERCOM_CALLS, call.id);
+      const cleanData = cleanForFirestore(call);
+      await setDoc(callRef, cleanData, { merge: true });
+      console.log('Intercom call synced to Firestore:', call.id);
+    } catch (err) {
+      console.warn('Could not sync intercom call to Firestore:', err);
+    }
+  },
+
+  async updateIntercomCallStatus(
+    callId: string,
+    status: IntercomCall['status'],
+    extraData?: Partial<IntercomCall>
+  ): Promise<void> {
+    try {
+      const callRef = doc(db, COLLECTIONS.INTERCOM_CALLS, callId);
+      const payload: Record<string, any> = {
+        status,
+        ...extraData,
+      };
+      if (status === 'connected' && !extraData?.answeredAt) {
+        payload.answeredAt = new Date().toISOString();
+      }
+      if ((status === 'ended' || status === 'rejected') && !extraData?.endedAt) {
+        payload.endedAt = new Date().toISOString();
+      }
+      if (status === 'door_unlocked' && !extraData?.doorUnlockedAt) {
+        payload.doorUnlockedAt = new Date().toISOString();
+      }
+      const cleanData = cleanForFirestore(payload);
+      await setDoc(callRef, cleanData, { merge: true });
+      console.log('Intercom call status updated:', callId, status);
+    } catch (err) {
+      console.warn('Could not update intercom call status:', err);
     }
   },
 

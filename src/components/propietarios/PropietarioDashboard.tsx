@@ -26,6 +26,7 @@ import {
   Truck,
   Car,
   Package,
+  DoorOpen,
 } from 'lucide-react';
 import { STATUS_META } from '../../utils/formatters';
 
@@ -50,6 +51,9 @@ export const PropietarioDashboard: React.FC<PropietarioDashboardProps> = ({
     setIsChatModalOpen,
     quickAuthorizations,
     unreadChatCount,
+    initiateIntercomCall,
+    setIsIntercomModalOpen,
+    unlockDoor,
   } = useCommunity();
 
   const [activeTab, setActiveTab] = useState<'mis_reportes' | 'cartelera' | 'areas_comunes'>('mis_reportes');
@@ -176,24 +180,31 @@ export const PropietarioDashboard: React.FC<PropietarioDashboardProps> = ({
           </div>
 
           <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-            Comunícate en directo por texto o nota de voz con la caseta de guardia, autoriza deliveries y visitas en tiempo real.
+            Citofonía virtual IP tipo Vantel con llamada en tiempo real hacia la caseta de guardia y apertura remota de portón.
           </p>
 
-          <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 pt-2 border-t border-slate-800">
             <button
-              onClick={() => setIsChatModalOpen(true)}
-              className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-emerald-600/20 cursor-pointer"
+              onClick={() => initiateIntercomCall('Caseta Principal Garita', 'Guardia de Turno')}
+              className="flex-1 py-2.5 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-98 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-emerald-500/20 cursor-pointer"
             >
-              <PhoneCall className="w-4 h-4" />
-              <span>Abrir Citófono / Chat</span>
+              <PhoneCall className="w-4 h-4 stroke-[2.5]" />
+              <span>Llamar a Caseta Guardia</span>
             </button>
             <button
-              onClick={() => setIsChatModalOpen(true)}
-              className="py-2.5 px-3 bg-slate-800 hover:bg-slate-750 text-emerald-300 font-bold text-xs rounded-xl flex items-center gap-1.5 transition border border-slate-700 cursor-pointer"
-              title="Autorizar delivery rápido"
+              onClick={() => unlockDoor()}
+              className="py-2.5 px-3 bg-slate-800 hover:bg-slate-750 text-emerald-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition border border-emerald-500/30 cursor-pointer"
+              title="Apertura remota de portón / puerta peatonal"
             >
-              <Truck className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline">Pase Rápido</span>
+              <DoorOpen className="w-4 h-4 text-emerald-400" />
+              <span>Abrir Portón</span>
+            </button>
+            <button
+              onClick={() => setIsIntercomModalOpen(true)}
+              className="py-2.5 px-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center transition border border-slate-700 cursor-pointer"
+              title="Abrir teclado citófono Vantel"
+            >
+              <Radio className="w-4 h-4 text-cyan-400" />
             </button>
           </div>
         </div>

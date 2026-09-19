@@ -23,6 +23,8 @@ import { InteractiveZoneMap } from './components/map/InteractiveZoneMap';
 import { LoginModal } from './components/auth/LoginModal';
 import { WalkieTalkieModal } from './components/radio/WalkieTalkieModal';
 import { IntercomGaritaModal } from './components/chat/IntercomGaritaModal';
+import { IncomingCallOverlay } from './components/intercom/IncomingCallOverlay';
+import { VantelCitofonoModal } from './components/intercom/VantelCitofonoModal';
 import { ToastContainer } from './components/ui/Toast';
 
 const AppContent: React.FC = () => {
@@ -35,6 +37,8 @@ const AppContent: React.FC = () => {
     setIsRadioModalOpen,
     isChatModalOpen,
     setIsChatModalOpen,
+    isIntercomModalOpen,
+    setIsIntercomModalOpen,
   } = useCommunity();
 
   // Modal states
@@ -210,6 +214,15 @@ const AppContent: React.FC = () => {
         isOpen={isChatModalOpen}
         onClose={() => setIsChatModalOpen(false)}
       />
+
+      {/* Vantel IP Real-Time Intercom Modal & Virtual Dialpad */}
+      <VantelCitofonoModal
+        isOpen={isIntercomModalOpen}
+        onClose={() => setIsIntercomModalOpen(false)}
+      />
+
+      {/* Global Real-Time Incoming Call Ringing Overlay */}
+      <IncomingCallOverlay />
 
       {/* Global Toast Notifications */}
       <ToastContainer />

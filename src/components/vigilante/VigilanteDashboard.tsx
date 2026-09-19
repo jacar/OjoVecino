@@ -51,6 +51,11 @@ export const VigilanteDashboard: React.FC<VigilanteDashboardProps> = ({
     setIsChatModalOpen,
     setIsRadioModalOpen,
     setSelectedChatChannel,
+    initiateIntercomCall,
+    setIsIntercomModalOpen,
+    activeIntercomCall,
+    unlockDoor,
+    endIntercomCall,
   } = useCommunity();
 
   const [activeTab, setActiveTab] = useState<'accesos' | 'citofono' | 'radio' | 'directorio'>('accesos');
@@ -326,13 +331,13 @@ export const VigilanteDashboard: React.FC<VigilanteDashboardProps> = ({
                         </button>
                         <button
                           onClick={() => {
-                            setSelectedChatChannel('garita');
-                            setIsChatModalOpen(true);
+                            initiateIntercomCall(auth.unit, auth.residentName);
                           }}
-                          className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
-                          title="Timbrar por citófono"
+                          className="py-2.5 px-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-950 font-bold text-xs rounded-xl transition flex items-center gap-1 shadow-xs cursor-pointer"
+                          title="Llamar en tiempo real por citófono Vantel"
                         >
-                          <PhoneCall className="w-4 h-4 text-emerald-600" />
+                          <PhoneCall className="w-4 h-4 text-emerald-700 animate-pulse" />
+                          <span className="hidden sm:inline">Llamar Depto</span>
                         </button>
                       </>
                     ) : (
@@ -366,12 +371,21 @@ export const VigilanteDashboard: React.FC<VigilanteDashboardProps> = ({
                 <PhoneCall className="w-4 h-4 text-emerald-600" />
                 Mensajes y Timbres Recibidos en Garita
               </h3>
-              <button
-                onClick={() => setIsChatModalOpen(true)}
-                className="px-3 py-1 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-500 transition"
-              >
-                Abrir Intercom Completo
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsIntercomModalOpen(true)}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs rounded-xl hover:from-emerald-500 hover:to-teal-500 transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Teclado Citófono Vantel</span>
+                </button>
+                <button
+                  onClick={() => setIsChatModalOpen(true)}
+                  className="px-3 py-1.5 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-700 transition"
+                >
+                  Chat Garita
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
@@ -580,13 +594,12 @@ export const VigilanteDashboard: React.FC<VigilanteDashboardProps> = ({
                 <div className="flex items-center gap-2 pt-2 border-t border-slate-200/80">
                   <button
                     onClick={() => {
-                      setSelectedUnitChat(item.unit);
-                      setActiveTab('citofono');
+                      initiateIntercomCall(item.unit, item.resident);
                     }}
-                    className="flex-1 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition"
+                    className="flex-1 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
                   >
                     <PhoneCall className="w-3.5 h-3.5" />
-                    <span>Citófono</span>
+                    <span>Llamar Citófono</span>
                   </button>
                   <button
                     onClick={() => {

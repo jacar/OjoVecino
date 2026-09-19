@@ -264,3 +264,23 @@ export interface QuickAuthorization {
   status: 'pendiente' | 'ingresado' | 'finalizado' | 'rechazado';
   createdAt: string;
 }
+
+export interface IntercomCall {
+  id: string;
+  communityId: string;
+  callerId: string;
+  callerName: string;
+  callerRole: Role;
+  callerUnit: string;
+  targetUnit: string;
+  targetName?: string;
+  status: 'ringing' | 'connected' | 'ended' | 'door_unlocked' | 'rejected';
+  createdAt: string;
+  answeredAt?: string;
+  endedAt?: string;
+  doorUnlockedAt?: string;
+  lastVoiceSnippet?: string;
+  lastVoiceSender?: string;
+  lastVoiceTimestamp?: string;
+}
+

@@ -55,6 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     logout,
     setIsRadioModalOpen,
     setIsChatModalOpen,
+    setIsIntercomModalOpen,
     activeRadioChannel,
     unreadChatCount,
   } = useCommunity();
@@ -178,19 +179,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Citófono / Garita Directa Button */}
+            {/* Citófono Vantel IP Real-Time Button */}
             <button
-              onClick={() => setIsChatModalOpen(true)}
+              onClick={() => setIsIntercomModalOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-colors cursor-pointer relative"
-              title="Citófono Digital Directo con Garita y Conserjería"
+              title="Citófono Virtual Vantel IP en Tiempo Real (Llamadas y Apertura de Puerta)"
             >
-              <PhoneCall className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="hidden lg:inline font-bold">Citófono Garita</span>
-              {unreadChatCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-emerald-400 text-slate-950 text-[10px] font-black animate-pulse">
-                  {unreadChatCount}
-                </span>
-              )}
+              <PhoneCall className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-pulse" />
+              <span className="hidden lg:inline font-bold">Citófono Vantel</span>
+              <span className="lg:hidden font-bold">Citófono</span>
             </button>
 
             {/* Radio Frecuencia PTT Button */}

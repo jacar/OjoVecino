@@ -123,6 +123,189 @@ class AudioRadioService {
     }
   }
 
+  private ringtoneInterval: any = null;
+
+  // Vantel Intercom Electronic Telephone Ring (Dual Frequencies 440Hz + 480Hz)
+  public playTelephoneRing(): void {
+    try {
+      const ctx = this.getAudioContext();
+      const now = ctx.currentTime;
+
+      const playBurst = (startTime: number) => {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(440, startTime);
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(480, startTime);
+
+        gain.gain.setValueAtTime(0.25, startTime);
+        gain.gain.setValueAtTime(0.25, startTime + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(startTime);
+        osc2.start(startTime);
+        osc1.stop(startTime + 0.4);
+        osc2.stop(startTime + 0.4);
+      };
+
+      // Double burst (ring-ring)
+      playBurst(now);
+      playBurst(now + 0.45);
+    } catch (e) {
+      console.warn('Telephone ring note:', e);
+    }
+  }
+
+  // Start continuous telephone ringtone loop (for incoming calls)
+  public startIntercomRingtoneLoop(): void {
+    if (this.ringtoneInterval) return;
+    this.playTelephoneRing();
+    this.ringtoneInterval = setInterval(() => {
+      this.playTelephoneRing();
+    }, 2800);
+  }
+
+  public stopIntercomRingtoneLoop(): void {
+    if (this.ringtoneInterval) {
+      clearInterval(this.ringtoneInterval);
+      this.ringtoneInterval = null;
+    }
+  }
+
+  // Vantel Remote Door Opener Electronic Buzzer ("Bzzzzzt - Click")
+  public playDoorBuzzer(): void {
+    try {
+      const ctx = this.getAudioContext();
+      const now = ctx.currentTime;
+
+      // Magnetic coil AC buzz (50Hz harmonic rich waveform)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(60, now);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(450, now);
+      filter.Q.setValueAtTime(3.0, now);
+
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.setValueAtTime(0.35, now + 0.9);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.98);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 1.0);
+
+      // Release latch metallic click at the end
+      setTimeout(() => {
+        this.playSquelchNoise(80, 0.2);
+      }, 950);
+    } catch (e) {
+      console.warn('Door buzzer note:', e);
+    }
+  }
+
+  // Telephone Keypad DTMF Tones
+  public playDtmfTone(key: string): void {
+    try {
+      const dtmfFrequencies: Record<string, [number, number]> = {
+        '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
+        '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
+        '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
+        '*': [941, 1209], '0': [941, 1336], '#': [941, 1477],
+        'A': [697, 1633], 'B': [770, 1633], 'C': [852, 1633],
+      };
+
+      const freqs = dtmfFrequencies[key.toUpperCase()] || [770, 1336];
+      const ctx = this.getAudioContext();
+      const now = ctx.currentTime;
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(freqs[0], now);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freqs[1], now);
+
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.13);
+      osc2.stop(now + 0.13);
+    } catch (e) {
+      console.warn('DTMF note:', e);
+    }
+  }
+
+  // Call Connected Chime
+  public playCallConnectedTone(): void {
+    try {
+      const ctx = this.getAudioContext();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+      osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.45);
+    } catch (e) {
+      console.warn('Call connected tone note:', e);
+    }
+  }
+
+  // Call Ended Tone (Fast busy)
+  public playCallEndedTone(): void {
+    try {
+      const ctx = this.getAudioContext();
+      const now = ctx.currentTime;
+
+      for (let i = 0; i < 3; i++) {
+        const t = now + i * 0.25;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(480, t);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.16);
+      }
+    } catch (e) {
+      console.warn('Call ended tone note:', e);
+    }
+  }
+
   // Intercom Citófono Doorbell Chime (Ding-Dong polyphonic chime)
   public playIntercomChime(): void {
     try {
