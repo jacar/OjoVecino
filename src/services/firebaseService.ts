@@ -7,6 +7,7 @@ import {
   onSnapshot,
   query,
   where,
+  limit,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -17,11 +18,14 @@ import {
   updateProfile,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { Report } from '../types';
+import { Report, ChatMessage, RadioTransmission, QuickAuthorization } from '../types';
 
 const COLLECTIONS = {
   REPORTS: 'reports',
   COMMUNITIES: 'communities',
+  CHAT_MESSAGES: 'chat_messages',
+  RADIO_TRANSMISSIONS: 'radio_transmissions',
+  AUTHORIZATIONS: 'quick_authorizations',
 };
 
 export const firebaseService = {
@@ -67,7 +71,6 @@ export const firebaseService = {
     try {
       const reportRef = doc(db, COLLECTIONS.REPORTS, report.id);
       await setDoc(reportRef, report, { merge: true });
-      console.log('Report saved to Firestore:', report.id);
     } catch (err) {
       console.warn('Could not save to Firestore (offline/rules):', err);
     }
@@ -80,9 +83,140 @@ export const firebaseService = {
     try {
       const reportRef = doc(db, COLLECTIONS.REPORTS, reportId);
       await updateDoc(reportRef, updates as any);
-      console.log('Report updated in Firestore:', reportId);
     } catch (err) {
       console.warn('Could not update in Firestore:', err);
+    }
+  },
+
+  // ==========================================
+  // REAL-TIME CHAT & CITOFONÍA FIRESTORE
+  // ==========================================
+  subscribeToChatMessages(
+    communityId: string,
+    onSuccess: (messages: ChatMessage[]) => void,
+    onError?: (err: any) => void
+  ) {
+    try {
+      const chatRef = collection(db, COLLECTIONS.CHAT_MESSAGES);
+      const q = query(chatRef, where('communityId', '==', communityId));
+
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const msgs: ChatMessage[] = [];
+            snapshot.forEach((docSnap) => {
+              msgs.push(docSnap.data() as ChatMessage);
+            });
+            msgs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            onSuccess(msgs);
+          }
+        },
+        (error) => {
+          console.warn('Firestore chat listener fallback:', error.message);
+          if (onError) onError(error);
+        }
+      );
+    } catch (err) {
+      console.warn('Firestore chat not initialized:', err);
+      return () => {};
+    }
+  },
+
+  async saveChatMessage(message: ChatMessage): Promise<void> {
+    try {
+      const msgRef = doc(db, COLLECTIONS.CHAT_MESSAGES, message.id);
+      await setDoc(msgRef, message, { merge: true });
+    } catch (err) {
+      console.warn('Could not sync chat message to Firestore:', err);
+    }
+  },
+
+  // ==========================================
+  // REAL-TIME RADIO TRANSMISSIONS FIRESTORE
+  // ==========================================
+  subscribeToRadioTransmissions(
+    communityId: string,
+    onSuccess: (transmissions: RadioTransmission[]) => void,
+    onError?: (err: any) => void
+  ) {
+    try {
+      const radioRef = collection(db, COLLECTIONS.RADIO_TRANSMISSIONS);
+      const q = query(radioRef, where('communityId', '==', communityId), limit(50));
+
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const txs: RadioTransmission[] = [];
+            snapshot.forEach((docSnap) => {
+              txs.push(docSnap.data() as RadioTransmission);
+            });
+            txs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            onSuccess(txs);
+          }
+        },
+        (error) => {
+          console.warn('Firestore radio listener fallback:', error.message);
+          if (onError) onError(error);
+        }
+      );
+    } catch (err) {
+      console.warn('Firestore radio not initialized:', err);
+      return () => {};
+    }
+  },
+
+  async saveRadioTransmission(transmission: RadioTransmission): Promise<void> {
+    try {
+      const txRef = doc(db, COLLECTIONS.RADIO_TRANSMISSIONS, transmission.id);
+      await setDoc(txRef, transmission, { merge: true });
+    } catch (err) {
+      console.warn('Could not sync radio transmission to Firestore:', err);
+    }
+  },
+
+  // ==========================================
+  // QUICK AUTHORIZATIONS FIRESTORE
+  // ==========================================
+  subscribeToQuickAuthorizations(
+    communityId: string,
+    onSuccess: (auths: QuickAuthorization[]) => void,
+    onError?: (err: any) => void
+  ) {
+    try {
+      const authRef = collection(db, COLLECTIONS.AUTHORIZATIONS);
+      const q = query(authRef, where('communityId', '==', communityId));
+
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const auths: QuickAuthorization[] = [];
+            snapshot.forEach((docSnap) => {
+              auths.push(docSnap.data() as QuickAuthorization);
+            });
+            auths.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            onSuccess(auths);
+          }
+        },
+        (error) => {
+          console.warn('Firestore authorizations listener fallback:', error.message);
+          if (onError) onError(error);
+        }
+      );
+    } catch (err) {
+      console.warn('Firestore authorizations not initialized:', err);
+      return () => {};
+    }
+  },
+
+  async saveQuickAuthorization(auth: QuickAuthorization): Promise<void> {
+    try {
+      const authRef = doc(db, COLLECTIONS.AUTHORIZATIONS, auth.id);
+      await setDoc(authRef, auth, { merge: true });
+    } catch (err) {
+      console.warn('Could not sync authorization to Firestore:', err);
     }
   },
 

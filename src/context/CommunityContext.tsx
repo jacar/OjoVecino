@@ -201,9 +201,9 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
     return communities.find((c) => c.id === activeCommunityId) || communities[0];
   }, [communities, activeCommunityId]);
 
-  // Real-time Firebase Firestore synchronization listener
+  // Real-time Firebase Firestore synchronization listeners
   useEffect(() => {
-    const unsubscribe = firebaseService.subscribeToReports(
+    const unsubReports = firebaseService.subscribeToReports(
       activeCommunity.id,
       (firestoreReports) => {
         if (firestoreReports && firestoreReports.length > 0) {
@@ -221,8 +221,59 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     );
 
+    const unsubChat = firebaseService.subscribeToChatMessages(
+      activeCommunity.id,
+      (firestoreMsgs) => {
+        if (firestoreMsgs && firestoreMsgs.length > 0) {
+          setChatMessages((prev) => {
+            const map = new Map<string, ChatMessage>();
+            prev.forEach((m) => map.set(m.id, m));
+            firestoreMsgs.forEach((m) => map.set(m.id, m));
+            return Array.from(map.values()).sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+          });
+        }
+      }
+    );
+
+    const unsubRadio = firebaseService.subscribeToRadioTransmissions(
+      activeCommunity.id,
+      (firestoreTxs) => {
+        if (firestoreTxs && firestoreTxs.length > 0) {
+          setRadioTransmissions((prev) => {
+            const map = new Map<string, RadioTransmission>();
+            prev.forEach((t) => map.set(t.id, t));
+            firestoreTxs.forEach((t) => map.set(t.id, t));
+            return Array.from(map.values()).sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          });
+        }
+      }
+    );
+
+    const unsubAuths = firebaseService.subscribeToQuickAuthorizations(
+      activeCommunity.id,
+      (firestoreAuths) => {
+        if (firestoreAuths && firestoreAuths.length > 0) {
+          setQuickAuthorizations((prev) => {
+            const map = new Map<string, QuickAuthorization>();
+            prev.forEach((a) => map.set(a.id, a));
+            firestoreAuths.forEach((a) => map.set(a.id, a));
+            return Array.from(map.values()).sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          });
+        }
+      }
+    );
+
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubReports) unsubReports();
+      if (unsubChat) unsubChat();
+      if (unsubRadio) unsubRadio();
+      if (unsubAuths) unsubAuths();
     };
   }, [activeCommunity.id]);
 
@@ -866,6 +917,9 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
     setChatMessages((prev) => [...prev, newMsg]);
     audioRadioService.playIntercomChime();
 
+    // Sync to Firestore in real-time
+    firebaseService.saveChatMessage(newMsg);
+
     // Auto-reply simulation from Juan Pérez (Conserje) if sent to Garita by resident
     if (data.channelId === 'garita' && currentUser.role === 'vecino') {
       setTimeout(() => {
@@ -890,6 +944,7 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
           createdAt: new Date().toISOString(),
         };
         setChatMessages((prev) => [...prev, autoReply]);
+        firebaseService.saveChatMessage(autoReply);
         audioRadioService.playIntercomChime();
         setUnreadChatCount((prev) => prev + 1);
       }, 2500);
@@ -929,6 +984,9 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     setRadioTransmissions((prev) => [newTx, ...prev]);
 
+    // Sync to Firestore in real-time
+    firebaseService.saveRadioTransmission(newTx);
+
     // Simulated radio guard back-and-forth response on Channel 1 (Garita)
     if (data.channelNumber === 1 && currentUser.role !== 'seguridad') {
       setTimeout(() => {
@@ -949,6 +1007,7 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
           createdAt: new Date().toISOString(),
         };
         setRadioTransmissions((prev) => [guardTx, ...prev]);
+        firebaseService.saveRadioTransmission(guardTx);
         audioRadioService.playRogerBeep();
       }, 3500);
     } else if (data.channelNumber === 3) {
@@ -981,6 +1040,7 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
     };
 
     setQuickAuthorizations((prev) => [newAuth, ...prev]);
+    firebaseService.saveQuickAuthorization(newAuth);
 
     // Automatically send to Garita chat
     const typeLabel = data.type === 'delivery' ? '🚚 Delivery' : data.type === 'visita' ? '🚗 Visita' : '🛠️ Servicio Técnico';
@@ -1001,7 +1061,14 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const updateAuthorizationStatus = (id: string, status: 'pendiente' | 'ingresado' | 'finalizado' | 'rechazado') => {
     setQuickAuthorizations((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status } : a))
+      prev.map((a) => {
+        if (a.id === id) {
+          const updated = { ...a, status };
+          firebaseService.saveQuickAuthorization(updated);
+          return updated;
+        }
+        return a;
+      })
     );
     showToast('Estado de Acceso', `Pase de ingreso marcado como "${status.toUpperCase()}"`, 'info');
   };

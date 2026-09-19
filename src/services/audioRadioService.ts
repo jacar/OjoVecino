@@ -8,13 +8,13 @@ class AudioRadioService {
   private analyser: AnalyserNode | null = null;
   private animationFrameId: number | null = null;
 
-  private getAudioContext(): AudioContext {
+  public getAudioContext(): AudioContext {
     if (!this.ctx || this.ctx.state === 'suspended') {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
     }
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
     return this.ctx;
   }
@@ -50,7 +50,7 @@ class AudioRadioService {
 
       noiseSource.start();
     } catch (e) {
-      console.warn('Audio synthesis not supported or blocked by browser policy:', e);
+      console.warn('Audio synthesis note:', e);
     }
   }
 
@@ -80,7 +80,7 @@ class AudioRadioService {
       // Add a quick static pulse
       this.playSquelchNoise(70, 0.08);
     } catch (e) {
-      console.warn('PTT start beep error:', e);
+      console.warn('PTT start beep note:', e);
     }
   }
 
@@ -119,7 +119,7 @@ class AudioRadioService {
         this.playSquelchNoise(140, 0.12);
       }, 190);
     } catch (e) {
-      console.warn('Roger beep error:', e);
+      console.warn('Roger beep note:', e);
     }
   }
 
@@ -150,7 +150,7 @@ class AudioRadioService {
       playTone(550, now + 0.35, 0.9, 0.25);
       playTone(733, now + 0.35, 0.9, 0.15);
     } catch (e) {
-      console.warn('Intercom chime error:', e);
+      console.warn('Intercom chime note:', e);
     }
   }
 
@@ -164,7 +164,6 @@ class AudioRadioService {
       const gain = ctx.createGain();
       osc.type = 'sawtooth';
       
-      // Fast alternating frequency
       for (let i = 0; i < 4; i++) {
         const t = now + i * 0.25;
         osc.frequency.setValueAtTime(750, t);
@@ -185,7 +184,7 @@ class AudioRadioService {
       osc.start(now);
       osc.stop(now + 1.1);
     } catch (e) {
-      console.warn('Emergency alert tone error:', e);
+      console.warn('Emergency alert tone note:', e);
     }
   }
 
@@ -209,12 +208,10 @@ class AudioRadioService {
       const ctx = this.getAudioContext();
       const source = ctx.createMediaStreamSource(stream);
 
-      // Create AnalyserNode for audio visualization (VU-meter / waveform)
       this.analyser = ctx.createAnalyser();
       this.analyser.fftSize = 64;
       source.connect(this.analyser);
 
-      // Start Level Polling
       if (onAudioLevel) {
         const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
         const checkLevel = () => {
@@ -232,12 +229,17 @@ class AudioRadioService {
         checkLevel();
       }
 
-      // Initialize MediaRecorder
       const options: MediaRecorderOptions = {};
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        options.mimeType = 'audio/webm;codecs=opus';
-      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-        options.mimeType = 'audio/ogg;codecs=opus';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          options.mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          options.mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          options.mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+          options.mimeType = 'audio/ogg';
+        }
       }
 
       this.mediaRecorder = new MediaRecorder(stream, options);
@@ -250,13 +252,12 @@ class AudioRadioService {
       this.mediaRecorder.start(100);
       return true;
     } catch (err) {
-      console.warn('Microphone access not available or denied:', err);
-      // Still play beep for simulated experience
+      console.warn('Microphone access note:', err);
       return false;
     }
   }
 
-  // Stop Recording and return Audio Blob + URL + duration
+  // Stop Recording and convert Audio to Base64 Data URL (for universal cross-device playback)
   public async stopRecording(): Promise<{
     blob: Blob | null;
     audioUrl: string | null;
@@ -279,11 +280,21 @@ class AudioRadioService {
       this.mediaRecorder.onstop = () => {
         const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
         const blob = new Blob(this.recordedChunks, { type: mimeType });
-        const audioUrl = URL.createObjectURL(blob);
         const durationSeconds = Math.max(1, Math.round(this.recordedChunks.length * 0.1));
 
-        this.cleanupStream();
-        resolve({ blob, audioUrl, durationSeconds });
+        // Convert Blob to Base64 Data URL so all devices/browsers can play it via Firestore
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          this.cleanupStream();
+          resolve({ blob, audioUrl: base64data, durationSeconds });
+        };
+        reader.onerror = () => {
+          this.cleanupStream();
+          const fallbackUrl = URL.createObjectURL(blob);
+          resolve({ blob, audioUrl: fallbackUrl, durationSeconds });
+        };
       };
 
       this.mediaRecorder.stop();
@@ -303,11 +314,24 @@ class AudioRadioService {
   public playAudio(url: string, onEnded?: () => void): HTMLAudioElement {
     this.playSquelchNoise(100, 0.08);
     const audio = new Audio(url);
-    audio.play();
+    
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => {
+        console.warn('Audio auto-play note (user interaction required):', e);
+      });
+    }
+
     audio.onended = () => {
       this.playSquelchNoise(90, 0.06);
       if (onEnded) onEnded();
     };
+    audio.onerror = () => {
+      console.warn('Error loading audio url, playing simulated transmission beep');
+      this.playSquelchNoise(250, 0.15);
+      if (onEnded) onEnded();
+    };
+
     return audio;
   }
 }
