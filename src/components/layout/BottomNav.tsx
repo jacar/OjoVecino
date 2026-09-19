@@ -1,87 +1,88 @@
-import React from 'react';
-import { useCommunity } from '../../context/CommunityContext';
-import { Home, ClipboardList, Plus, BarChart3, BookOpen } from 'lucide-react';
-
-interface BottomNavProps {
-  onOpenNewReport: () => void;
-  onOpenExecutiveReport: () => void;
-  onOpenRules: () => void;
-}
-
-export const BottomNav: React.FC<BottomNavProps> = ({
-  onOpenNewReport,
-  onOpenExecutiveReport,
-  onOpenRules,
-}) => {
-  const { activeView, setActiveView, reports, currentUser } = useCommunity();
-
-  const pendingCount = reports.filter(
-    (r) => r.status === 'nuevo' || r.status === 'en_revision' || r.status === 'asignado' || r.status === 'en_proceso'
-  ).length;
-
-  return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-2 py-1.5 shadow-2xl">
-      <div className="flex items-center justify-around relative">
-        {/* Feed */}
-        <button
-          onClick={() => setActiveView('feed')}
-          className={`flex flex-col items-center justify-center w-14 py-1 rounded-xl transition-colors ${
-            activeView === 'feed' ? 'text-blue-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Home className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Reportes</span>
-        </button>
-
-        {/* Panel Operativo / Admin */}
-        <button
-          onClick={() => setActiveView('admin')}
-          className={`relative flex flex-col items-center justify-center w-14 py-1 rounded-xl transition-colors ${
-            activeView === 'admin' ? 'text-blue-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <div className="relative">
-            <ClipboardList className="w-5 h-5 mb-0.5" />
-            {pendingCount > 0 && (
-              <span className="absolute -top-1 -right-2 bg-blue-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {pendingCount}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px]">Gestión</span>
-        </button>
-
-        {/* Floating Center Action Button: Nuevo Reporte */}
-        <div className="relative -top-4 flex items-center justify-center">
-          <button
-            onClick={onOpenNewReport}
-            className="w-13 h-13 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/40 hover:scale-105 active:scale-95 transition-transform border-2 border-slate-900"
-            title="Crear reporte en menos de 45 segundos"
-          >
-            <Plus className="w-7 h-7" />
-          </button>
-        </div>
-
-        {/* Resumen Ejecutivo */}
-        <button
-          onClick={onOpenExecutiveReport}
-          className={`flex flex-col items-center justify-center w-14 py-1 rounded-xl transition-colors ${
-            activeView === 'analytics' ? 'text-blue-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <BarChart3 className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Métricas</span>
-        </button>
-
-        {/* Decálogo de Reglas */}
-        <button
-          onClick={onOpenRules}
-          className="flex flex-col items-center justify-center w-14 py-1 rounded-xl text-slate-400 hover:text-slate-200 transition-colors"
-        >
-          <BookOpen className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Reglas</span>
-        </button>
-      </div>
-    </div>
-  );
-};
+import React from 'react';
+import { useCommunity } from '../../context/CommunityContext';
+import { Home, Shield, Plus, Briefcase, PhoneCall } from 'lucide-react';
+
+interface BottomNavProps {
+  onOpenNewReport: () => void;
+  onOpenExecutiveReport: () => void;
+  onOpenRules: () => void;
+}
+
+export const BottomNav: React.FC<BottomNavProps> = ({
+  onOpenNewReport,
+}) => {
+  const {
+    activePortal,
+    setActivePortal,
+    setIsIntercomModalOpen,
+    unreadChatCount,
+    incomingIntercomCall,
+  } = useCommunity();
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 px-3 py-1.5 shadow-2xl safe-area-pb">
+      <div className="flex items-center justify-around relative max-w-md mx-auto">
+        {/* Tab 1: Propietarios */}
+        <button
+          onClick={() => setActivePortal('propietarios')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors cursor-pointer ${
+            activePortal === 'propietarios' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Home className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Vecinos</span>
+        </button>
+
+        {/* Tab 2: Caseta Vigilante */}
+        <button
+          onClick={() => setActivePortal('vigilante')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors cursor-pointer ${
+            activePortal === 'vigilante' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Shield className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Caseta</span>
+        </button>
+
+        {/* Floating Center Action Button: Nuevo Reporte (<45s) */}
+        <div className="relative -top-3.5 flex items-center justify-center">
+          <button
+            onClick={onOpenNewReport}
+            className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 via-cyan-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/40 hover:scale-105 active:scale-95 transition-transform border-2 border-slate-900 cursor-pointer"
+            title="Crear reporte en 45 segundos"
+          >
+            <Plus className="w-6 h-6 stroke-[3]" />
+          </button>
+        </div>
+
+        {/* Tab 4: Administración */}
+        <button
+          onClick={() => setActivePortal('admin')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors cursor-pointer ${
+            activePortal === 'admin' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Briefcase className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Admin</span>
+        </button>
+
+        {/* Tab 5: Citófono Vantel */}
+        <button
+          onClick={() => setIsIntercomModalOpen(true)}
+          className="relative flex flex-col items-center justify-center py-1 px-2 rounded-xl text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+        >
+          <div className="relative">
+            <PhoneCall className={`w-5 h-5 mb-0.5 ${incomingIntercomCall ? 'animate-bounce text-emerald-300' : ''}`} />
+            {incomingIntercomCall && (
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+            )}
+          </div>
+          <span className="text-[10px]">Citófono</span>
+        </button>
+      </div>
+    </div>
+  );
+};

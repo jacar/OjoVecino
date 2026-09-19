@@ -179,11 +179,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Main Admin Section Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs font-bold overflow-x-auto">
+      {/* Main Admin Section Tabs (Smooth Mobile Scrollable) */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs font-bold overflow-x-auto no-scrollbar">
         <button
           onClick={() => setAdminSection('operaciones')}
-          className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
             adminSection === 'operaciones'
               ? 'bg-slate-900 text-white shadow-xs'
               : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200/80'
@@ -195,7 +195,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <button
           onClick={() => setAdminSection('garita_radio')}
-          className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
             adminSection === 'garita_radio'
               ? 'bg-slate-900 text-white shadow-xs'
               : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200/80'
@@ -207,7 +207,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <button
           onClick={() => setAdminSection('propietarios')}
-          className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
             adminSection === 'propietarios'
               ? 'bg-slate-900 text-white shadow-xs'
               : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200/80'
@@ -219,7 +219,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <button
           onClick={() => setAdminSection('comunicados')}
-          className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
             adminSection === 'comunicados'
               ? 'bg-slate-900 text-white shadow-xs'
               : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200/80'

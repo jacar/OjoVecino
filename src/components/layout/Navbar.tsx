@@ -67,74 +67,71 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 shadow-xs transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-15 gap-3">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-15 gap-2 sm:gap-3">
           {/* Logo & Brand Identity */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 p-0.5 shadow-sm shadow-blue-500/20 flex items-center justify-center">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 p-0.5 shadow-sm shadow-blue-500/20 flex items-center justify-center">
               <div className="w-full h-full bg-slate-950/20 rounded-[10px] flex items-center justify-center">
-                <Eye className="w-5 h-5 text-white" />
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base tracking-tight text-white">
+                <span className="font-extrabold text-sm sm:text-base tracking-tight text-white">
                   OJO VECINO
                 </span>
                 <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-blue-500/20 text-blue-300 border border-blue-400/25">
                   OS Comunitario
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 -mt-0.5 hidden sm:block font-medium">
+              <p className="text-[10px] text-slate-400 -mt-0.5 hidden md:block font-medium">
                 Gestión residencial transparente
               </p>
             </div>
           </div>
 
-          {/* Center: Modern Segmented Portal Control for the 3 distinct roles */}
-          <div className="flex items-center bg-slate-950/70 p-1 rounded-xl border border-slate-800 text-xs font-semibold shadow-inner">
+          {/* Desktop Center: Segmented Portal Control for the 3 distinct roles */}
+          <div className="hidden md:flex items-center bg-slate-950/70 p-1 rounded-xl border border-slate-800 text-xs font-semibold shadow-inner">
             <button
               onClick={() => setActivePortal('propietarios')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activePortal === 'propietarios'
                   ? 'bg-slate-800 text-white font-bold shadow-xs border border-slate-750'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Home className={`w-3.5 h-3.5 ${activePortal === 'propietarios' ? 'text-cyan-400' : ''}`} />
-              <span className="hidden sm:inline">Propietarios</span>
-              <span className="sm:hidden">Vecinos</span>
+              <span>Propietarios</span>
             </button>
 
             <button
               onClick={() => setActivePortal('vigilante')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activePortal === 'vigilante'
                   ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-500'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Shield className={`w-3.5 h-3.5 ${activePortal === 'vigilante' ? 'text-white' : 'text-emerald-400'}`} />
-              <span className="hidden sm:inline">Caseta Vigilante</span>
-              <span className="sm:hidden">Caseta</span>
+              <span>Caseta Vigilante</span>
             </button>
 
             <button
               onClick={() => setActivePortal('admin')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activePortal === 'admin'
                   ? 'bg-indigo-600 text-white font-bold shadow-xs border border-indigo-500'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Briefcase className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Administración</span>
-              <span className="sm:hidden">Admin</span>
+              <span>Administración</span>
             </button>
           </div>
 
-          {/* Right Actions Toolbar */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Right Actions Toolbar (Responsive & Compact) */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* Community Switcher Dropdown */}
             <div className="relative hidden md:block">
               <button
@@ -150,7 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {isCommDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-750 shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs rounded-2xl bg-slate-900 border border-slate-750 shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95">
                   <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800">
                     Comunidades Residenciales
                   </div>
@@ -179,59 +176,40 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Citófono Vantel IP Real-Time Button */}
+            {/* Citófono Vantel IP Button */}
             <button
               onClick={() => setIsIntercomModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-colors cursor-pointer relative"
-              title="Citófono Virtual Vantel IP en Tiempo Real (Llamadas y Apertura de Puerta)"
+              className="flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-colors cursor-pointer relative"
+              title="Citófono Virtual Vantel IP"
             >
-              <PhoneCall className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-pulse" />
-              <span className="hidden lg:inline font-bold">Citófono Vantel</span>
-              <span className="lg:hidden font-bold">Citófono</span>
+              <PhoneCall className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
+              <span className="hidden sm:inline">Citófono</span>
             </button>
 
             {/* Radio Frecuencia PTT Button */}
             <button
               onClick={() => setIsRadioModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-colors cursor-pointer"
               title="Radio Frecuencia Walkie-Talkie PTT"
             >
               <div className="relative flex items-center justify-center">
-                <Radio className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <Radio className="w-4 h-4 text-amber-400 shrink-0" />
                 <span className="absolute -top-1 -right-1 flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
               </div>
-              <span className="hidden sm:inline font-bold">Radio PTT</span>
-              <span className="hidden sm:inline px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono text-[9px] border border-amber-400/30">
-                CH-0{activeRadioChannel}
-              </span>
+              <span className="hidden sm:inline">Radio</span>
             </button>
 
-            {/* Smart Duplicate Detector Pill */}
-            {clusterSuggestions.length > 0 && (
-              <button
-                onClick={onOpenClustering}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors cursor-pointer"
-                title="Detección de reportes similares para agrupar"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                <span className="hidden xl:inline font-bold">Duplicados</span>
-                <span className="px-1.5 py-0.2 rounded-md bg-indigo-400 text-slate-950 text-[10px] font-black">
-                  {clusterSuggestions.length}
-                </span>
-              </button>
-            )}
-
-            {/* User Profile & Account Menu */}
+            {/* User Profile & Account Menu Button */}
             <div className="relative">
               <button
                 onClick={() => {
                   setIsUserDropdownOpen(!isUserDropdownOpen);
                   setIsCommDropdownOpen(false);
                 }}
-                className={`flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 p-1 sm:pl-2 sm:pr-2.5 sm:py-1 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
                   isAdminRole
                     ? 'bg-slate-800/90 hover:bg-slate-800 border-indigo-500/40 text-slate-200'
                     : 'bg-slate-800/90 hover:bg-slate-800 border-slate-700 text-slate-200'
@@ -257,7 +235,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-slate-900 border border-slate-750 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95">
+                <div className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-auto sm:mt-2 w-[calc(100vw-1rem)] sm:w-80 max-w-sm rounded-2xl bg-slate-900 border border-slate-750 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95">
                   {/* Current Active Account */}
                   <div className="px-4 py-3 border-b border-slate-800 bg-slate-950/40">
                     <div className="flex items-center justify-between mb-1">
@@ -360,6 +338,45 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Mobile 3-Portal Switcher Sub-Bar */}
+        <div className="md:hidden py-1.5 pb-2 border-t border-slate-800/60 flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setActivePortal('propietarios')}
+            className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              activePortal === 'propietarios'
+                ? 'bg-slate-800 text-white shadow-xs border border-slate-700'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Home className={`w-3.5 h-3.5 ${activePortal === 'propietarios' ? 'text-cyan-400' : ''}`} />
+            <span>Propietarios</span>
+          </button>
+
+          <button
+            onClick={() => setActivePortal('vigilante')}
+            className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              activePortal === 'vigilante'
+                ? 'bg-emerald-600 text-white shadow-xs border border-emerald-500'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Shield className={`w-3.5 h-3.5 ${activePortal === 'vigilante' ? 'text-white' : 'text-emerald-400'}`} />
+            <span>Caseta</span>
+          </button>
+
+          <button
+            onClick={() => setActivePortal('admin')}
+            className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              activePortal === 'admin'
+                ? 'bg-indigo-600 text-white font-bold shadow-xs border border-indigo-500'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>Admin</span>
+          </button>
         </div>
       </div>
     </header>

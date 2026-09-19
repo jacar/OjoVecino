@@ -82,25 +82,20 @@ export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
             </p>
           </div>
 
-          {/* Action Toolbar & Live Status */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          {/* Action Toolbar & Live Status (Responsive) */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             {/* Critical Alert Chip if any */}
-            {criticalIssuesCount > 0 ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold border border-rose-200 text-xs shadow-2xs">
+            {criticalIssuesCount > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold border border-rose-200 text-xs shadow-2xs shrink-0">
                 <AlertOctagon className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                 <span>{criticalIssuesCount} Casos Críticos</span>
-              </div>
-            ) : (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 text-slate-600 font-medium border border-slate-200 text-xs">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Sin emergencias</span>
               </div>
             )}
 
             {/* Toggle Map View */}
             <button
               onClick={onToggleMap}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shrink-0 ${
                 showMap
                   ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                   : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/90 shadow-2xs'
@@ -114,7 +109,7 @@ export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
             {/* Decálogo de Reglas Button */}
             <button
               onClick={onOpenRules}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs transition-colors cursor-pointer shrink-0"
             >
               <BookOpen className="w-3.5 h-3.5 text-slate-500" />
               <span>Reglas</span>
@@ -123,7 +118,7 @@ export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
             {/* Primary Action Button: Nuevo Reporte (<45s) */}
             <button
               onClick={onOpenNewReport}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white text-xs font-extrabold shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white text-xs font-extrabold shadow-sm transition-all cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Nuevo Reporte</span>

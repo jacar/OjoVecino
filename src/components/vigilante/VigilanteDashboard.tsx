@@ -206,23 +206,23 @@ export const VigilanteDashboard: React.FC<VigilanteDashboardProps> = ({
         </div>
       </div>
 
-      {/* Navigation Tabs for Guard */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold">
+      {/* Navigation Tabs for Guard (Smooth Mobile Scrollable) */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar text-xs font-bold">
         <button
           onClick={() => setActiveTab('accesos')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 ${
             activeTab === 'accesos'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <Truck className="w-4 h-4 text-emerald-400" />
-          <span>Control de Accesos & Pases ({pendingAuths.length})</span>
+          <span>Control de Accesos ({pendingAuths.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('citofono')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 ${
             activeTab === 'citofono'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -234,26 +234,26 @@ export const VigilanteDashboard: React.FC<VigilanteDashboardProps> = ({
 
         <button
           onClick={() => setActiveTab('radio')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 ${
             activeTab === 'radio'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <Radio className="w-4 h-4 text-amber-400" />
-          <span>Consola de Radio PTT</span>
+          <span>Consola Radio PTT</span>
         </button>
 
         <button
           onClick={() => setActiveTab('directorio')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 ${
             activeTab === 'directorio'
               ? 'bg-slate-900 text-white shadow-md'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
           <Building2 className="w-4 h-4 text-indigo-400" />
-          <span>Directorio de Unidades ({unitsList.length})</span>
+          <span>Directorio ({unitsList.length})</span>
         </button>
       </div>
 
